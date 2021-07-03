@@ -41,3 +41,30 @@ jobs:
           tags: |
             vvanio/rotten-potatoes:latest
             vvanio/rotten-potatoes:${{ github.run_number }}
+  
+  # Continuous Delivery Pipeline
+  CD:
+    runs-on: ubuntu-latest
+    needs: [CI]
+    steps:
+      - uses: actions/checkout@v2
+      # Setting Generic K8s context
+      - name: Kubernetes set context
+        uses: Azure/k8s-set-context@v1.1
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.K8S_CONFIG }}
+      # Deployng Generic K8s mongo
+      - name: Deploy Mongo
+        uses: Azure/k8s-deploy@v1
+        with:
+          manifests: |
+            k8s/mongodb/deployment.yaml
+            k8s/mongodb/service.yaml
+      # Deploying Generic K8s web
+      - name: Deploy Web
+        uses: Azure/k8s-deploy@v1
+        with:
+          manifests: |
+            k8s/web/deployment.yaml
+          images: vvanio/rotten-potatoes:${{ github.run_number }}
